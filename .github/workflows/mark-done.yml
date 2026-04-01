@@ -1,0 +1,32 @@
+name: Auto-Check Roadmap Progress
+on:
+  issues:
+    types: [closed] # Ativado quando você clica em "Close Issue"
+
+jobs:
+  mark-as-done:
+    # Só roda se a issue tiver a etiqueta 'weekly-track' que o outro robô criou
+    if: contains(github.event.issue.labels.*.name, 'weekly-track')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Marcar Semana como Concluída
+        run: |
+          # Pega o número da semana direto do título da Issue (ex: "Semana 1")
+          WEEK_NUM=$(echo "${{ github.event.issue.title }}" | grep -oE '[0-9]+' | head -1)
+          
+          echo "Atualizando progresso da Semana $WEEK_NUM no arquivo MD..."
+          
+          # Procura a linha que contém "Week $WEEK_NUM" e troca [ ] por [x]
+          # O 'sed' faz a substituição exata no arquivo
+          sed -i "/Week $WEEK_NUM/s/\[ \]/\[x\]/g" LEARNING_ROADMAP_2026.md
+          
+      - name: Commit das Alterações
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "✅ Auto-track: Semana $WEEK_NUM concluída"
+          branch: main
