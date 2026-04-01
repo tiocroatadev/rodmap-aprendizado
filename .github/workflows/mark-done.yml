@@ -1,10 +1,9 @@
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 name: Auto-Check Roadmap Progress
 on:
   issues:
     types: [closed] # Ativado quando você clica em "Close Issue"
-
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   mark-as-done:
     # Só roda se a issue tiver a etiqueta 'weekly-track' que o outro robô criou
