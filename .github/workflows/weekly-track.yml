@@ -1,6 +1,6 @@
 name: Weekly Roadmap Tracker
 on:
-  workflow_dispatch: # Botão manual para testar
+  workflow_dispatch: # Disparo manual para teste
 
 jobs:
   create-issue:
@@ -9,32 +9,34 @@ jobs:
       issues: write
       contents: read
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Extract Data
         id: roadmap
         run: |
-          # Calcula a semana atual baseada no seu início de 31/Mar/2026
+          # 1. Calcula a semana (Início em 31/Mar/2026)
           START_DATE="2026-03-30"
           CURRENT_DATE=$(date +%Y-%m-%d)
           START_SEC=$(date -d "$START_DATE" +%s)
           CURRENT_SEC=$(date -d "$CURRENT_DATE" +%s)
           WEEK_NUM=$(( ($CURRENT_SEC - $START_SEC) / 604800 + 1 ))
-          
           echo "num=$WEEK_NUM" >> $GITHUB_OUTPUT
+
+          # 2. Busca flexível: tenta achar "Week X" ou apenas o número da semana
+          # Se não achar nada, ele não "crasha" o script ( || true )
+          grep -i "Week $WEEK_NUM" LEARNING_ROADMAP_2026.md > tasks.txt || echo "Sem detalhes específicos no arquivo para a Semana $WEEK_NUM." > tasks.txt
           
-          # Tenta pegar o conteúdo do arquivo
-          CONTENT=$(grep -i "Week $WEEK_NUM" LEARNING_ROADMAP_2026.md || echo "Sem tarefas específicas para a Semana $WEEK_NUM.")
-          echo "text<<EOF" >> $GITHUB_ENV
-          echo "$CONTENT" >> $GITHUB_ENV
+          # Prepara o corpo da issue para o GitHub CLI
+          echo "BODY<<EOF" >> $GITHUB_ENV
+          cat tasks.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Create Issue via GitHub CLI
+      - name: Create Issue via GH CLI
         run: |
           gh issue create \
-            --title "🚀 Semana ${{ steps.roadmap.outputs.num }} - Foco: Cloud Architect" \
-            --body "${{ env.text }}" \
+            --title "🚀 Semana ${{ steps.roadmap.outputs.num }} - Cloud Architect Journey" \
+            --body "${{ env.BODY }}" \
             --label "weekly-track"
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
