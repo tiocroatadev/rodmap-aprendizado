@@ -1,13 +1,12 @@
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: truename: Weekly Roadmap Tracker
-  
+name: Weekly Roadmap Tracker
 on:
   schedule:
     - cron: '0 9 * * 1' 
   workflow_dispatch: 
 
-
-
+# Resolve o aviso de depreciação do Node.js 20
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   create-issue:
     runs-on: ubuntu-latest
