@@ -1,0 +1,52 @@
+name: Weekly Roadmap Tracker
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Roda toda segunda-feira às 09:00 UTC
+  workflow_dispatch: # Permite que você clique em um botão para testar agora!
+
+jobs:
+  create-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Calculate Week and Extract Data
+        id: roadmap_data
+        run: |
+          # Define a data de início oficial (Segunda da Week 1)
+          START_DATE="2026-03-30"
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          
+          # Calcula o número da semana
+          START_SEC=$(date -d "$START_DATE" +%s)
+          CURRENT_SEC=$(date -d "$CURRENT_DATE" +%s)
+          WEEK_NUM=$(( ($CURRENT_SEC - $START_SEC) / 604800 + 1 ))
+          
+          echo "WEEK_ID=Week $WEEK_NUM" >> $GITHUB_ENV
+          echo "NUM=$WEEK_NUM" >> $GITHUB_ENV
+
+          # Extrai do arquivo as linhas que mencionam a semana atual (AWS, Linux e Networking)
+          # O grep busca "Week X" ignorando maiúsculas/minúsculas
+          grep -i "Week $WEEK_NUM" LEARNING_ROADMAP_2026.md > current_tasks.txt || echo "Nenhuma tarefa específica listada para esta semana." > current_tasks.txt
+          
+      - name: Create Weekly Issue
+        uses: imjohnbo/issue-action@v3
+        with:
+          title: "🚀 Semana ${{ env.NUM }} - Foco: Cloud Solutions Architect"
+          body: |
+            ### 🎯 Objetivos Extraídos do Roadmap:
+            
+            $(cat current_tasks.txt)
+
+            ---
+            ### 📝 Lembretes de Estudo (Team Leader Mode):
+            - [ ] **AWS SAA:** 1.5h - 2h (Foco em Patterns e Labs)
+            - [ ] **Linux Admin:** 1h (Prática de CLI e Scripts)
+            - [ ] **Networking:** 45min (Conceitos e Topologias)
+            
+            *Mantenha a consistência. O objetivo é a certificação em Agosto!*
+          labels: weekly-track, roadmap-2026
