@@ -1,12 +1,7 @@
 name: Weekly Roadmap Tracker
 on:
-  schedule:
-    - cron: '0 9 * * 1' 
-  workflow_dispatch: 
+  workflow_dispatch: # Botão manual para testar
 
-# Resolve o aviso de depreciação do Node.js 20
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   create-issue:
     runs-on: ubuntu-latest
@@ -14,36 +9,32 @@ jobs:
       issues: write
       contents: read
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Calculate Week and Extract Data
-        id: roadmap_data
+      - name: Extract Data
+        id: roadmap
         run: |
+          # Calcula a semana atual baseada no seu início de 31/Mar/2026
           START_DATE="2026-03-30"
           CURRENT_DATE=$(date +%Y-%m-%d)
           START_SEC=$(date -d "$START_DATE" +%s)
           CURRENT_SEC=$(date -d "$CURRENT_DATE" +%s)
           WEEK_NUM=$(( ($CURRENT_SEC - $START_SEC) / 604800 + 1 ))
           
-          echo "NUM=$WEEK_NUM" >> $GITHUB_OUTPUT
+          echo "num=$WEEK_NUM" >> $GITHUB_OUTPUT
           
-          # Extrai as linhas do arquivo MD que contêm "Week X"
-          CONTENT=$(grep -i "Week $WEEK_NUM" LEARNING_ROADMAP_2026.md || echo "Nenhuma tarefa específica.")
-          
-          # Formata o conteúdo para o GitHub aceitar (evita erro de múltiplas linhas)
-          echo "WEEK_CONTENT<<EOF" >> $GITHUB_ENV
+          # Tenta pegar o conteúdo do arquivo
+          CONTENT=$(grep -i "Week $WEEK_NUM" LEARNING_ROADMAP_2026.md || echo "Sem tarefas específicas para a Semana $WEEK_NUM.")
+          echo "text<<EOF" >> $GITHUB_ENV
           echo "$CONTENT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Create Issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: "🚀 Semana ${{ steps.roadmap_data.outputs.NUM }} - Foco: Cloud Architect",
-              body: "### 🎯 Objetivos Extraídos do Roadmap:\n\n${{ env.WEEK_CONTENT }}\n\n---\n### 📝 Lembretes:\n- [ ] AWS SAA: 1.5h - 2h\n- [ ] Linux Admin: 1h\n- [ ] Networking: 45min",
-              labels: ['weekly-track', 'roadmap-2026']
-            })
+      - name: Create Issue via GitHub CLI
+        run: |
+          gh issue create \
+            --title "🚀 Semana ${{ steps.roadmap.outputs.num }} - Foco: Cloud Architect" \
+            --body "${{ env.text }}" \
+            --label "weekly-track"
+        env:
+          GH_TOKEN: ${{ github.token }}
