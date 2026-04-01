@@ -1,11 +1,12 @@
-name: Weekly Roadmap Tracker
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: truename: Weekly Roadmap Tracker
+  
 on:
   schedule:
     - cron: '0 9 * * 1' 
   workflow_dispatch: 
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 
 jobs:
   create-issue:
